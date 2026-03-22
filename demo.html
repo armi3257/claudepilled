@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ClaudePilled - TikTok Content Posting Demo</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0D0D0D;
+            color: #E0E0E0;
+            min-height: 100vh;
+        }
+        .header {
+            background: #111;
+            border-bottom: 1px solid #222;
+            padding: 16px 32px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .header .logo {
+            font-size: 24px;
+            font-weight: 700;
+            color: #00D4FF;
+        }
+        .header .subtitle {
+            color: #888;
+            font-size: 14px;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 32px;
+        }
+        .status-bar {
+            background: #1a1a2e;
+            border: 1px solid #00D4FF33;
+            border-radius: 8px;
+            padding: 16px 24px;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #444;
+            transition: background 0.3s;
+        }
+        .status-dot.active { background: #00D4FF; box-shadow: 0 0 8px #00D4FF66; }
+        .status-dot.success { background: #00FF88; box-shadow: 0 0 8px #00FF8866; }
+        .status-text { font-size: 14px; color: #aaa; }
+        .status-text.active { color: #00D4FF; }
+        .status-text.success { color: #00FF88; }
+
+        .step-card {
+            background: #111;
+            border: 1px solid #222;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 16px;
+            transition: all 0.3s;
+            opacity: 0.4;
+        }
+        .step-card.active {
+            opacity: 1;
+            border-color: #00D4FF55;
+            box-shadow: 0 0 20px #00D4FF11;
+        }
+        .step-card.done {
+            opacity: 0.7;
+            border-color: #00FF8855;
+        }
+        .step-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+        .step-num {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #222;
+            color: #888;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 14px;
+        }
+        .step-card.active .step-num { background: #00D4FF22; color: #00D4FF; }
+        .step-card.done .step-num { background: #00FF8822; color: #00FF88; }
+        .step-title { font-size: 18px; font-weight: 600; }
+        .step-desc { color: #888; font-size: 14px; line-height: 1.5; margin-left: 44px; }
+
+        .btn {
+            display: inline-block;
+            padding: 12px 28px;
+            border-radius: 8px;
+            border: none;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 16px;
+            margin-left: 44px;
+        }
+        .btn-primary {
+            background: #00D4FF;
+            color: #0D0D0D;
+        }
+        .btn-primary:hover { background: #00BFEE; transform: translateY(-1px); }
+        .btn-secondary {
+            background: #222;
+            color: #E0E0E0;
+            border: 1px solid #333;
+        }
+        .btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .oauth-mock {
+            display: none;
+            background: #fff;
+            border-radius: 12px;
+            padding: 32px;
+            margin: 16px 0 16px 44px;
+            max-width: 400px;
+            color: #161823;
+            text-align: center;
+        }
+        .oauth-mock.visible { display: block; }
+        .oauth-mock img { width: 80px; margin-bottom: 16px; }
+        .oauth-mock h3 { font-size: 18px; margin-bottom: 8px; }
+        .oauth-mock p { font-size: 13px; color: #666; margin-bottom: 16px; }
+        .oauth-mock .scope-list {
+            text-align: left;
+            background: #f5f5f5;
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-bottom: 16px;
+            font-size: 13px;
+        }
+        .oauth-mock .scope-item {
+            padding: 4px 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .oauth-mock .scope-check { color: #00C853; }
+        .oauth-btn {
+            background: #FE2C55;
+            color: white;
+            border: none;
+            padding: 10px 32px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+        }
+        .oauth-btn:hover { background: #E5274D; }
+
+        .upload-area {
+            display: none;
+            background: #0D0D0D;
+            border: 2px dashed #333;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 16px 0 0 44px;
+            text-align: center;
+        }
+        .upload-area.visible { display: block; }
+        .upload-area.uploading { border-color: #00D4FF; }
+        .upload-area.uploaded { border-color: #00FF88; border-style: solid; }
+
+        .slide-previews {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            margin: 16px 0;
+            flex-wrap: wrap;
+        }
+        .slide-preview {
+            width: 60px;
+            height: 90px;
+            background: #1a1a2e;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            color: #00D4FF;
+            border: 1px solid #00D4FF33;
+        }
+
+        .progress-bar {
+            height: 4px;
+            background: #222;
+            border-radius: 2px;
+            margin: 12px 0;
+            overflow: hidden;
+            display: none;
+        }
+        .progress-bar.visible { display: block; }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00D4FF, #00FF88);
+            border-radius: 2px;
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+
+        .api-response {
+            display: none;
+            background: #0a0a14;
+            border: 1px solid #222;
+            border-radius: 8px;
+            padding: 16px;
+            margin: 16px 0 0 44px;
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+        .api-response.visible { display: block; }
+        .api-response .key { color: #00D4FF; }
+        .api-response .str { color: #00FF88; }
+        .api-response .num { color: #FF6B35; }
+
+        .caption-preview {
+            display: none;
+            background: #111;
+            border: 1px solid #222;
+            border-radius: 8px;
+            padding: 16px;
+            margin: 12px 0 0 44px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        .caption-preview.visible { display: block; }
+        .caption-preview .hashtag { color: #00D4FF; }
+
+        .success-banner {
+            display: none;
+            background: linear-gradient(135deg, #00FF8811, #00D4FF11);
+            border: 1px solid #00FF8844;
+            border-radius: 12px;
+            padding: 24px;
+            text-align: center;
+            margin-top: 24px;
+        }
+        .success-banner.visible { display: block; }
+        .success-banner h2 { color: #00FF88; margin-bottom: 8px; font-size: 24px; }
+        .success-banner p { color: #aaa; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">&#9889; ClaudePilled</div>
+        <div class="subtitle">Content Posting Dashboard</div>
+    </div>
+
+    <div class="container">
+        <div class="status-bar">
+            <div class="status-dot" id="statusDot"></div>
+            <div class="status-text" id="statusText">Ready to connect</div>
+        </div>
+
+        <!-- Step 1: OAuth -->
+        <div class="step-card active" id="step1">
+            <div class="step-header">
+                <div class="step-num">1</div>
+                <div class="step-title">Connect TikTok Account</div>
+            </div>
+            <div class="step-desc">Authorize ClaudePilled to post content on your behalf via TikTok's OAuth 2.0 flow.</div>
+            <button class="btn btn-primary" id="connectBtn" onclick="startOAuth()">Connect with TikTok</button>
+
+            <div class="oauth-mock" id="oauthModal">
+                <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
+                    <rect width="80" height="80" rx="16" fill="#000"/>
+                    <path d="M52.5 30.5c-3.5 0-6.5-1.5-8.5-4v18c0 7-5.5 12.5-12.5 12.5S19 51.5 19 44.5 24.5 32 31.5 32c.5 0 1 0 1.5.1v6.5c-.5-.1-1-.2-1.5-.2-3.3 0-6 2.7-6 6s2.7 6 6 6 6-2.7 6-6V20h6.5c.5 4.5 4 8 8.5 8.5v6" fill="#FE2C55"/>
+                </svg>
+                <h3>Authorize ClaudePilled</h3>
+                <p>This app would like to:</p>
+                <div class="scope-list">
+                    <div class="scope-item"><span class="scope-check">&#10003;</span> Post photos to your account</div>
+                    <div class="scope-item"><span class="scope-check">&#10003;</span> Upload content on your behalf</div>
+                    <div class="scope-item"><span class="scope-check">&#10003;</span> Read your public profile</div>
+                </div>
+                <button class="oauth-btn" onclick="completeOAuth()">Authorize</button>
+            </div>
+        </div>
+
+        <!-- Step 2: Upload Content -->
+        <div class="step-card" id="step2">
+            <div class="step-header">
+                <div class="step-num">2</div>
+                <div class="step-title">Upload Slideshow Content</div>
+            </div>
+            <div class="step-desc">AI-generated slides are uploaded to TikTok via the Content Posting API (photo_images endpoint).</div>
+            <button class="btn btn-primary" id="uploadBtn" onclick="startUpload()" disabled>Upload Slides</button>
+
+            <div class="upload-area" id="uploadArea">
+                <div class="slide-previews" id="slidePreviews"></div>
+                <div class="progress-bar" id="progressBar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <p id="uploadStatus" style="margin-top: 8px; font-size: 13px; color: #888;"></p>
+            </div>
+
+            <div class="caption-preview" id="captionPreview">
+                <strong>Caption:</strong><br>
+                This AI tool turns screenshots into working code in seconds.<br><br>
+                Here's how to use it for free:<br><br>
+                1. Take a screenshot of any UI<br>
+                2. Upload to screenshot-to-code<br>
+                3. Get production-ready HTML/CSS<br><br>
+                Save this for later &#128278;<br><br>
+                <span class="hashtag">#AITools #WebDev #Coding #TechTips #AI</span>
+            </div>
+        </div>
+
+        <!-- Step 3: API Response -->
+        <div class="step-card" id="step3">
+            <div class="step-header">
+                <div class="step-num">3</div>
+                <div class="step-title">Publish via Content Posting API</div>
+            </div>
+            <div class="step-desc">POST request to /v2/post/publish/ with photo_images mode and slideshow configuration.</div>
+            <button class="btn btn-primary" id="publishBtn" onclick="startPublish()" disabled>Publish to TikTok</button>
+
+            <div class="api-response" id="apiRequest">
+                <span class="key">POST</span> https://open.tiktokapis.com/v2/post/publish/<br>
+                {<br>
+                &nbsp;&nbsp;<span class="key">"post_info"</span>: {<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"title"</span>: <span class="str">"This AI tool turns screenshots into code..."</span>,<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"privacy_level"</span>: <span class="str">"PUBLIC_TO_EVERYONE"</span>,<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"disable_comment"</span>: <span class="num">false</span><br>
+                &nbsp;&nbsp;},<br>
+                &nbsp;&nbsp;<span class="key">"source_info"</span>: {<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"source"</span>: <span class="str">"PULL_FROM_URL"</span>,<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"photo_images"</span>: [<span class="str">"slide_1.png"</span>, <span class="str">"..."</span>, <span class="str">"slide_6.png"</span>]<br>
+                &nbsp;&nbsp;},<br>
+                &nbsp;&nbsp;<span class="key">"post_mode"</span>: <span class="str">"DIRECT_POST"</span><br>
+                }
+            </div>
+
+            <div class="api-response" id="apiResponse">
+                <span style="color: #00FF88;">&#10003; 200 OK</span><br>
+                {<br>
+                &nbsp;&nbsp;<span class="key">"data"</span>: {<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"publish_id"</span>: <span class="str">"7348291056482"</span><br>
+                &nbsp;&nbsp;},<br>
+                &nbsp;&nbsp;<span class="key">"error"</span>: {<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"code"</span>: <span class="str">"ok"</span>,<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"message"</span>: <span class="str">""</span><br>
+                &nbsp;&nbsp;}<br>
+                }
+            </div>
+        </div>
+
+        <div class="success-banner" id="successBanner">
+            <h2>&#10003; Published Successfully</h2>
+            <p>Slideshow posted to @claudepilled via TikTok Content Posting API</p>
+        </div>
+    </div>
+
+    <script>
+        let currentStep = 1;
+
+        function setStatus(text, type) {
+            const dot = document.getElementById('statusDot');
+            const txt = document.getElementById('statusText');
+            dot.className = 'status-dot ' + type;
+            txt.className = 'status-text ' + type;
+            txt.textContent = text;
+        }
+
+        function startOAuth() {
+            document.getElementById('connectBtn').disabled = true;
+            document.getElementById('connectBtn').textContent = 'Connecting...';
+            setStatus('Opening TikTok authorization...', 'active');
+
+            setTimeout(() => {
+                document.getElementById('oauthModal').classList.add('visible');
+            }, 800);
+        }
+
+        function completeOAuth() {
+            document.getElementById('oauthModal').classList.remove('visible');
+            document.getElementById('connectBtn').textContent = 'Connected';
+            document.getElementById('connectBtn').classList.remove('btn-primary');
+            document.getElementById('connectBtn').classList.add('btn-secondary');
+            document.getElementById('connectBtn').style.color = '#00FF88';
+            setStatus('TikTok account connected (@claudepilled)', 'success');
+
+            document.getElementById('step1').classList.remove('active');
+            document.getElementById('step1').classList.add('done');
+            document.getElementById('step2').classList.add('active');
+            document.getElementById('uploadBtn').disabled = false;
+            currentStep = 2;
+        }
+
+        function startUpload() {
+            document.getElementById('uploadBtn').disabled = true;
+            document.getElementById('uploadBtn').textContent = 'Uploading...';
+            setStatus('Uploading slides to TikTok...', 'active');
+
+            const area = document.getElementById('uploadArea');
+            area.classList.add('visible', 'uploading');
+
+            const previews = document.getElementById('slidePreviews');
+            for (let i = 1; i <= 6; i++) {
+                const div = document.createElement('div');
+                div.className = 'slide-preview';
+                div.textContent = 'Slide ' + i;
+                div.style.opacity = '0.3';
+                previews.appendChild(div);
+            }
+
+            const bar = document.getElementById('progressBar');
+            bar.classList.add('visible');
+            const fill = document.getElementById('progressFill');
+            const status = document.getElementById('uploadStatus');
+
+            let progress = 0;
+            let slideIndex = 0;
+            const interval = setInterval(() => {
+                progress += 3;
+                fill.style.width = Math.min(progress, 100) + '%';
+
+                if (progress > slideIndex * 16 + 10 && slideIndex < 6) {
+                    previews.children[slideIndex].style.opacity = '1';
+                    slideIndex++;
+                    status.textContent = 'Uploading slide ' + slideIndex + '/6...';
+                }
+
+                if (progress >= 100) {
+                    clearInterval(interval);
+                    area.classList.remove('uploading');
+                    area.classList.add('uploaded');
+                    status.textContent = '6 slides uploaded successfully';
+                    status.style.color = '#00FF88';
+
+                    document.getElementById('captionPreview').classList.add('visible');
+                    document.getElementById('uploadBtn').textContent = 'Uploaded';
+                    document.getElementById('uploadBtn').style.color = '#00FF88';
+
+                    setStatus('Slides uploaded, ready to publish', 'success');
+                    document.getElementById('step2').classList.remove('active');
+                    document.getElementById('step2').classList.add('done');
+                    document.getElementById('step3').classList.add('active');
+                    document.getElementById('publishBtn').disabled = false;
+                    currentStep = 3;
+                }
+            }, 50);
+        }
+
+        function startPublish() {
+            document.getElementById('publishBtn').disabled = true;
+            document.getElementById('publishBtn').textContent = 'Publishing...';
+            setStatus('Sending POST to Content Posting API...', 'active');
+
+            document.getElementById('apiRequest').classList.add('visible');
+
+            setTimeout(() => {
+                document.getElementById('apiResponse').classList.add('visible');
+                setStatus('Post published successfully!', 'success');
+
+                document.getElementById('publishBtn').textContent = 'Published';
+                document.getElementById('publishBtn').classList.remove('btn-primary');
+                document.getElementById('publishBtn').classList.add('btn-secondary');
+                document.getElementById('publishBtn').style.color = '#00FF88';
+
+                document.getElementById('step3').classList.remove('active');
+                document.getElementById('step3').classList.add('done');
+
+                setTimeout(() => {
+                    document.getElementById('successBanner').classList.add('visible');
+                }, 500);
+            }, 1500);
+        }
+    </script>
+</body>
+</html>
